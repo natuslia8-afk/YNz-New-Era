@@ -1,4 +1,3 @@
-
 package com.ynz.newera;
 
 import android.app.Activity;
