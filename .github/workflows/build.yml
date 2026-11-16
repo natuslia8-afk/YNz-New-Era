@@ -1,0 +1,408 @@
+name: Build YNZ New Era APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Generate Android Project Files
+      run: |
+        mkdir -p app/src/main/java/com/lo/ynznewera
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/drawable
+
+        # 1. Root Gradle
+        cat > build.gradle << 'EOF'
+        plugins {
+            id 'com.android.application' version '8.2.0' apply false
+            id 'org.jetbrains.kotlin.android' version '1.9.0' apply false
+        }
+        EOF
+
+        cat > settings.gradle << 'EOF'
+        pluginManagement {
+            repositories { google(); mavenCentral(); gradlePluginPortal() }
+        }
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories { google(); mavenCentral() }
+        }
+        rootProject.name = "YNZNewEra"
+        include ':app'
+        EOF
+
+        # 2. App Gradle
+        cat > app/build.gradle << 'EOF'
+        plugins {
+            id 'com.android.application'
+            id 'org.jetbrains.kotlin.android'
+        }
+        android {
+            namespace 'com.lo.ynznewera'
+            compileSdk 34
+            defaultConfig {
+                applicationId "com.lo.ynznewera"
+                minSdk 24
+                targetSdk 34
+                versionCode 1
+                versionName "1.0"
+            }
+            buildTypes { release { minifyEnabled false } }
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+            kotlinOptions { jvmTarget = '17' }
+        }
+        dependencies {
+            implementation 'androidx.core:core-ktx:1.12.0'
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'com.google.android.material:material:1.11.0'
+        }
+        EOF
+
+        # 3. Manifest
+        cat > app/src/main/AndroidManifest.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.lo.ynznewera">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+            <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+            <queries>
+                <package android:name="com.whatsapp" />
+            </queries>
+            <application android:allowBackup="true" android:label="YNZ NEW ERA" android:theme="@style/Theme.YNZNewEra">
+                <activity android:name=".MainActivity" android:exported="true">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN" />
+                        <category android:name="android.intent.category.LAUNCHER" />
+                    </intent-filter>
+                </activity>
+                <activity android:name=".MenuActivity" />
+                <activity android:name=".GetPassActivity" />
+                <activity android:name=".DeveloperActivity" />
+                <service android:name=".CrashService" android:foregroundServiceType="dataSync" />
+            </application>
+        </manifest>
+        EOF
+
+        # 4. Colors & Themes
+        cat > app/src/main/res/values/colors.xml << 'EOF'
+        <resources>
+            <color name="black_bg">#050000</color>
+            <color name="red_neon">#FF0000</color>
+            <color name="red_dark">#800000</color>
+            <color name="gray_text">#A0A0A0</color>
+            <color name="white_text">#FFFFFF</color>
+        </resources>
+        EOF
+
+        cat > app/src/main/res/values/themes.xml << 'EOF'
+        <resources>
+            <style name="Theme.YNZNewEra" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+                <item name="colorPrimary">@color/red_dark</item>
+                <item name="colorPrimaryVariant">@color/red_neon</item>
+                <item name="colorOnPrimary">@color/white_text</item>
+                <item name="android:windowBackground">@color/black_bg</item>
+                <item name="android:statusBarColor">@color/black_bg</item>
+            </style>
+        </resources>
+        EOF
+
+        # 5. Drawables
+        cat > app/src/main/res/drawable/box_red.xml << 'EOF'
+        <shape xmlns:android="http://schemas.android.com/apk/res/android">
+            <solid android:color="@color/black_bg" />
+            <stroke android:width="1.5dp" android:color="@color/red_neon" />
+            <corners android:radius="8dp" />
+        </shape>
+        EOF
+
+        cat > app/src/main/res/drawable/btn_red.xml << 'EOF'
+        <shape xmlns:android="http://schemas.android.com/apk/res/android">
+            <gradient android:startColor="#FF0000" android:endColor="#800000" android:angle="270" />
+            <corners android:radius="6dp" />
+        </shape>
+        EOF
+
+        # 6. Layouts
+        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@color/black_bg" android:padding="20dp">
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_centerInParent="true" android:orientation="vertical" android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="YNZ\nNEW ERA" android:textColor="@color/white_text" android:textSize="55sp"
+                    android:textStyle="bold" android:gravity="center" android:shadowColor="@color/red_neon" android:shadowRadius="20"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="- ACCESS SYSTEM -" android:textColor="@color/gray_text" android:layout_marginBottom="40dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:background="@drawable/box_red" android:orientation="vertical" android:padding="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="🔒 Enter Password" android:textColor="@color/white_text" android:textSize="18sp" android:textStyle="bold" android:layout_marginBottom="10dp"/>
+                    <EditText android:id="@+id/etPass" android:layout_width="match_parent" android:layout_height="45dp"
+                        android:background="#1A0000" android:padding="10dp" android:textColor="@color/white_text"
+                        android:textColorHint="@color/gray_text" android:hint="Masukkan Password..." android:layout_marginBottom="16dp"/>
+                    <Button android:id="@+id/btnOk" android:layout_width="match_parent" android:layout_height="50dp"
+                        android:text="OK" android:textSize="18sp" android:textStyle="bold" android:textColor="@color/white_text" android:background="@drawable/btn_red"/>
+                </LinearLayout>
+                <Button android:id="@+id/btnGetPass" android:layout_width="match_parent" android:layout_height="45dp"
+                    android:text="✈ Get Password" android:textColor="@color/white_text" android:background="@drawable/box_red" android:layout_marginTop="20dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="© YNZ NEW ERA - 2025\nAll Rights Reserved." android:textColor="@color/gray_text" android:textSize="10sp" android:gravity="center" android:layout_marginTop="30dp"/>
+            </LinearLayout>
+        </RelativeLayout>
+        EOF
+
+        cat > app/src/main/res/layout/activity_menu.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@color/black_bg" android:orientation="vertical" android:padding="20dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="30dp">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="YNZ\nNEW ERA" android:textColor="@color/white_text" android:textSize="30sp" android:textStyle="bold" android:shadowColor="@color/red_neon" android:shadowRadius="10"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="- BUG COLLECTION -" android:textColor="@color/gray_text"/>
+                </LinearLayout>
+                <ImageView android:id="@+id/btnProfile" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_menu_myplaces" android:background="@drawable/box_red" android:padding="10dp" />
+            </LinearLayout>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PILIH MENU BUG" android:textColor="@color/red_neon" android:textStyle="bold" android:layout_marginBottom="16dp"/>
+            <LinearLayout android:id="@+id/btnCrashBiasa" android:layout_width="match_parent" android:layout_height="65dp" android:background="@drawable/box_red" android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp" android:layout_marginBottom="12dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="💀 Crash Biasa\nCrash ringan, aman." android:textColor="@color/white_text"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=">" android:textColor="@color/red_neon" android:textSize="20sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/btnCrashParah" android:layout_width="match_parent" android:layout_height="65dp" android:background="@drawable/box_red" android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp" android:layout_marginBottom="12dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="💀 Crash Parah\nCrash total, brutal." android:textColor="@color/white_text"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=">" android:textColor="@color/red_neon" android:textSize="20sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/btnBanned" android:layout_width="match_parent" android:layout_height="65dp" android:background="@drawable/box_red" android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="💀 Banned\nBanned device / akun." android:textColor="@color/white_text"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=">" android:textColor="@color/red_neon" android:textSize="20sp"/>
+            </LinearLayout>
+            <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="50dp" android:background="@drawable/box_red" android:orientation="horizontal" android:gravity="center" android:padding="10dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎯 Target" android:textColor="@color/red_neon" android:textStyle="bold"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="  TARGET  " android:textColor="@color/white_text"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⧉" android:textColor="@color/white_text"/>
+            </LinearLayout>
+        </LinearLayout>
+        EOF
+
+        cat > app/src/main/res/layout/activity_get_pass.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@color/black_bg" android:orientation="vertical" android:padding="24dp" android:gravity="center">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Get Password" android:textColor="@color/white_text" android:textSize="24sp" android:textStyle="bold" android:layout_marginBottom="40dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="✈" android:textSize="80sp" android:textColor="@color/red_neon" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Password akan dikirim langsung ke Telegram Anda." android:textColor="@color/white_text" android:textSize="16sp" android:gravity="center" android:layout_marginBottom="40dp"/>
+            <Button android:id="@+id/btnTelegram" android:layout_width="match_parent" android:layout_height="50dp" android:text="Kirim ke Telegram" android:textColor="@color/white_text" android:textStyle="bold" android:background="@drawable/btn_red" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠ Pastikan akan Telegram Anda aktif dan terhubung!" android:textColor="@color/red_neon" android:textSize="14sp" android:gravity="center" android:background="@drawable/box_red" android:padding="16dp"/>
+        </LinearLayout>
+        EOF
+
+        cat > app/src/main/res/layout/activity_developer.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@color/black_bg" android:orientation="vertical" android:padding="24dp">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Profil Developer" android:textColor="@color/white_text" android:textSize="20sp" android:textStyle="bold" android:gravity="center" android:layout_marginBottom="30dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="👤" android:textSize="100sp" android:gravity="center" android:shadowColor="@color/red_neon" android:shadowRadius="30" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="YNZ NEW ERA 👑" android:textColor="@color/white_text" android:textSize="22sp" android:textStyle="bold" android:gravity="center"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Developer & Creator" android:textColor="@color/gray_text" android:gravity="center" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="&quot;Bug bukan pelanggaran, tapi jalan menuju kebebasan.&quot;" android:textColor="@color/white_text" android:textStyle="italic" android:gravity="center" android:layout_marginBottom="30dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tentang Kami:\nYNZ NEW ERA adalah komunitas pengembang yang fokus pada bug tools, security bypass, dan berbagai fitur premium untuk kebutuhan Anda." android:textColor="@color/white_text" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Follow & Support:\n✈ @ynz_newera" android:textColor="@color/red_neon" android:textStyle="bold"/>
+            <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="© YNZ NEW ERA - 2025\nAll Rights Reserved." android:textColor="@color/gray_text" android:textSize="10sp" android:gravity="center"/>
+        </LinearLayout>
+        EOF
+
+        # 7. Kotlin Files
+        cat > app/src/main/java/com/lo/ynznewera/MainActivity.kt << 'EOF'
+        package com.lo.ynznewera
+        import android.content.Intent
+        import android.os.Bundle
+        import android.widget.Button
+        import android.widget.EditText
+        import android.widget.Toast
+        import androidx.appcompat.app.AppCompatActivity
+
+        class MainActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+                setContentView(R.layout.activity_main)
+                val etPass = findViewById<EditText>(R.id.etPass)
+                val btnOk = findViewById<Button>(R.id.btnOk)
+                val btnGetPass = findViewById<Button>(R.id.btnGetPass)
+                val PASSWORD = "YNZ NEW ERA"
+                btnOk.setOnClickListener {
+                    if (etPass.text.toString() == PASSWORD) {
+                        startActivity(Intent(this, MenuActivity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(this, "Password Salah!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                btnGetPass.setOnClickListener { startActivity(Intent(this, GetPassActivity::class.java)) }
+            }
+        }
+        EOF
+
+        cat > app/src/main/java/com/lo/ynznewera/GetPassActivity.kt << 'EOF'
+        package com.lo.ynznewera
+        import android.content.Intent
+        import android.net.Uri
+        import android.os.Bundle
+        import android.widget.Button
+        import androidx.appcompat.app.AppCompatActivity
+
+        class GetPassActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+                setContentView(R.layout.activity_get_pass)
+                findViewById<Button>(R.id.btnTelegram).setOnClickListener {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/ynz_newera")))
+                }
+            }
+        }
+        EOF
+
+        cat > app/src/main/java/com/lo/ynznewera/MenuActivity.kt << 'EOF'
+        package com.lo.ynznewera
+        import android.content.Intent
+        import android.os.Build
+        import android.os.Bundle
+        import android.widget.ImageView
+        import android.widget.LinearLayout
+        import android.widget.Toast
+        import androidx.appcompat.app.AppCompatActivity
+
+        class MenuActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+                setContentView(R.layout.activity_menu)
+                val btnCrashBiasa = findViewById<LinearLayout>(R.id.btnCrashBiasa)
+                val btnCrashParah = findViewById<LinearLayout>(R.id.btnCrashParah)
+                val btnBanned = findViewById<LinearLayout>(R.id.btnBanned)
+                val btnProfile = findViewById<ImageView>(R.id.btnProfile)
+                btnCrashBiasa.setOnClickListener {
+                    Toast.makeText(this, "Memulai Crash Ringan...", Toast.LENGTH_SHORT).show()
+                    val i = Intent(this, CrashService::class.java).putExtra("mode", "biasa")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+                }
+                btnCrashParah.setOnClickListener {
+                    Toast.makeText(this, "Memulai Crash Brutal...", Toast.LENGTH_SHORT).show()
+                    val i = Intent(this, CrashService::class.java).putExtra("mode", "parah")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+                }
+                btnBanned.setOnClickListener { Toast.makeText(this, "Fitur Banned disimulasikan.", Toast.LENGTH_SHORT).show() }
+                btnProfile.setOnClickListener { startActivity(Intent(this, DeveloperActivity::class.java)) }
+            }
+        }
+        EOF
+
+        cat > app/src/main/java/com/lo/ynznewera/DeveloperActivity.kt << 'EOF'
+        package com.lo.ynznewera
+        import android.os.Bundle
+        import androidx.appcompat.app.AppCompatActivity
+
+        class DeveloperActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+                setContentView(R.layout.activity_developer)
+            }
+        }
+        EOF
+
+        cat > app/src/main/java/com/lo/ynznewera/CrashService.kt << 'EOF'
+        package com.lo.ynznewera
+        import android.app.Notification
+        import android.app.NotificationChannel
+        import android.app.NotificationManager
+        import android.app.Service
+        import android.content.Intent
+        import android.os.Build
+        import android.os.IBinder
+        import kotlin.concurrent.thread
+
+        class CrashService : Service() {
+            private val WA_PKG = "com.whatsapp"
+            private var running = true
+
+            override fun onCreate() {
+                super.onCreate()
+                val channelId = "ynz_crash"
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val nm = getSystemService(NotificationManager::class.java)
+                    nm.createNotificationChannel(NotificationChannel(channelId, "Crash Service", NotificationManager.IMPORTANCE_LOW))
+                    startForeground(1, Notification.Builder(this, channelId).setContentTitle("YNZ Engine Aktif").setSmallIcon(android.R.drawable.ic_dialog_alert).build())
+                } else {
+                    startForeground(1, Notification.Builder(this).setContentTitle("YNZ Engine Aktif").setSmallIcon(android.R.drawable.ic_dialog_alert).build())
+                }
+            }
+
+            override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+                val mode = intent?.getStringExtra("mode") ?: "biasa"
+                running = true
+                thread {
+                    while (running) {
+                        try {
+                            val bad = Intent().apply {
+                                setClassName(WA_PKG, "$WA_PKG.Main")
+                                data = android.net.Uri.parse("wa://crash/%%%")
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(bad)
+                            if (mode == "parah") {
+                                val view = Intent(Intent.ACTION_VIEW).apply {
+                                    setPackage(WA_PKG)
+                                    data = android.net.Uri.parse("content://broken/%%")
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(view)
+                            }
+                        } catch (_: Exception) {}
+                        Thread.sleep(if (mode == "parah") 50 else 150)
+                    }
+                }
+                return START_STICKY
+            }
+
+            override fun onDestroy() {
+                running = false
+                super.onDestroy()
+            }
+            override fun onBind(intent: Intent?): IBinder? = null
+        }
+        EOF
+
+    - name: Build with Gradle
+      run: |
+        gradle wrapper --gradle-version 8.2
+        chmod +x gradlew
+        ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: YNZ-NewEra-APK
+        path: app/build/outputs/apk/debug/app-debug.apk
