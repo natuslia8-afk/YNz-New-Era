@@ -1,21 +1,17 @@
-# YNZ NEW ERA — Android
+# YNZ NEW ERA
 
-Contoh proyek Android native (Java) dengan tema hitam-merah.
+Source HTML lengkap untuk preview YNZ NEW ERA.
 
-## Login
-Password demo: `YNZ NEW ERA`
+## Jalankan lokal
+Buka `index.html` di browser.
 
-## Konfigurasi Telegram
-Ubah `https://t.me/ynz_newera` di `MainActivity.java` menjadi username Telegram developer yang benar.
-
-## Build lewat GitHub
+## Publikasikan dengan GitHub Pages
 1. Buat repository GitHub baru.
-2. Upload seluruh isi folder proyek ini ke repository (pastikan folder `.github` ikut terunggah).
-3. Buka tab **Actions**.
-4. Jalankan workflow **Build YNZ NEW ERA APK**, atau push commit ke branch `main`.
-5. Setelah selesai, buka hasil workflow dan unduh artifact `YNZ-NEW-ERA-debug-apk`.
-6. Ekstrak artifact untuk mendapatkan `app-debug.apk`.
+2. Upload `index.html` dan `README.md` ke root repository.
+3. Buka Settings → Pages.
+4. Pada Build and deployment pilih Deploy from a branch.
+5. Pilih branch `main`, folder `/ (root)`, lalu Save.
 
-## Catatan
-Menu Crash/Banned adalah demo UI saja. Proyek ini tidak melakukan crash, pemblokiran, atau tindakan terhadap perangkat/akun.
-Password ditanam di aplikasi hanya untuk demo. Untuk aplikasi sungguhan, gunakan autentikasi sisi server dan jangan menyimpan password rahasia di kode APK.
+Password demo: `YNZ NEW ERA`.
+
+Catatan: fitur CRITTT, Crash, dan Banned dalam source ini hanya simulasi visual. Tidak ada fungsi menyerang, crash, spam, atau mengganggu perangkat/akun.
