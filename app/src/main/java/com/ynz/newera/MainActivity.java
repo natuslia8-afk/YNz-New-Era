@@ -1,118 +1,250 @@
-
 package com.ynz.newera;
 
-import android.app.*;
-import android.os.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.os.Bundle;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.view.*;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.*;
-import android.content.*;
 
 public class MainActivity extends Activity {
 
-    String KEY = "YNZ NEW ERA";
-    LinearLayout layout;
+    private final String KEY = "YNZ NEW ERA";
+    private final int RED = Color.rgb(210, 0, 25);
+    private final int WHITE = Color.WHITE;
+    private final int DARK = Color.rgb(12, 12, 15);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        login();
+
+        getWindow().setStatusBarColor(Color.rgb(8, 8, 10));
+        getWindow().setNavigationBarColor(Color.BLACK);
+
+        showLogin();
     }
 
-    void login() {
+    int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density);
+    }
+
+    GradientDrawable shape(int color, int radius, int stroke) {
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(color);
+        bg.setCornerRadius(dp(radius));
+
+        if (stroke > 0) {
+            bg.setStroke(dp(1), stroke);
+        }
+
+        return bg;
+    }
+
+    TextView text(String value, int size, int color) {
+        TextView t = new TextView(this);
+        t.setText(value);
+        t.setTextSize(size);
+        t.setTextColor(color);
+        t.setGravity(Gravity.CENTER);
+        t.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        return t;
+    }
+
+    void showLogin() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(22), dp(25), dp(22), dp(20));
+        box.setBackground(shape(Color.rgb(25, 20, 23), 18, RED));
+
+        TextView logo = text("YNZ", 42, RED);
+        logo.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        box.addView(logo);
+
+        TextView subtitle = text("N E W   E R A", 15, WHITE);
+        box.addView(subtitle);
+
+        TextView info = text("LOGIN ACCESS", 13, Color.LTGRAY);
+        info.setPadding(0, dp(20), 0, dp(10));
+        box.addView(info);
+
         EditText input = new EditText(this);
+        input.setSingleLine(true);
         input.setHint("Masukkan password / key");
-        input.setTextColor(Color.BLACK);
+        input.setTextColor(WHITE);
+        input.setHintTextColor(Color.GRAY);
+        input.setPadding(dp(12), dp(10), dp(12), dp(10));
+        input.setBackground(shape(Color.rgb(40, 35, 38), 10, RED));
+        box.addView(input);
 
-        new AlertDialog.Builder(this)
-            .setTitle("YNZ NEW ERA LOGIN")
-            .setMessage("Masukkan key untuk melanjutkan")
-            .setView(input)
-            .setPositiveButton("LOGIN", (d, w) -> {
-                if (input.getText().toString().equals(KEY)) {
-                    home();
-                } else {
-                    Toast.makeText(this, "Key salah!", Toast.LENGTH_SHORT).show();
-                    login();
-                }
-            })
-            .setNegativeButton("GET PASSWORD", (d, w) -> {
-                telegram();
-                login();
-            })
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(box)
+            .setPositiveButton("LOGIN", null)
+            .setNegativeButton("GET PASSWORD", null)
             .setCancelable(false)
-            .show();
+            .create();
+
+        dialog.setOnShowListener(v -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                .setTextColor(RED);
+
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                .setTextColor(RED);
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener(view -> {
+                    if (input.getText().toString().equals(KEY)) {
+                        dialog.dismiss();
+                        showHome();
+                    } else {
+                        input.setError("Password salah!");
+                    }
+                });
+
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                .setOnClickListener(view -> openTelegram());
+        });
+
+        dialog.show();
     }
 
-    void home() {
-        layout = new LinearLayout(this);
-        layout.setOrientation(1);
-        layout.setPadding(25, 35, 25, 25);
-        layout.setBackgroundColor(Color.rgb(12,12,12));
+    void showHome() {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(18), dp(20), dp(18), dp(20));
 
-        TextView title = new TextView(this);
-        title.setText("YNZ NEW ERA");
-        title.setTextSize(28);
-        title.setTypeface(null, Typeface.BOLD);
-        title.setTextColor(Color.RED);
-        title.setGravity(Gravity.CENTER);
-        layout.addView(title);
-
-        addMenu("BUG COLLECTION");
-        addMenu("CRASH BIASA");
-        addMenu("CRASH PARAH");
-        addMenu("BANNED");
-        addMenu("TARGET");
-
-        addMenu("PROFIL DEVELOPER");
-        addMenu("TELEGRAM");
+        GradientDrawable background = new GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            new int[] {
+                Color.rgb(35, 5, 12),
+                Color.rgb(12, 12, 15),
+                Color.BLACK
+            }
+        );
+        root.setBackground(background);
 
         ScrollView scroll = new ScrollView(this);
-        scroll.addView(layout);
-        setContentView(scroll);
+        scroll.setFillViewport(true);
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+
+        TextView logo = text("YNZ", 48, RED);
+        logo.setPadding(0, dp(12), 0, 0);
+        content.addView(logo);
+
+        TextView title = text("N E W   E R A", 17, WHITE);
+        title.setPadding(0, 0, 0, dp(5));
+        content.addView(title);
+
+        TextView welcome = text(
+            "WELCOME TO THE NEW GENERATION",
+            11,
+            Color.LTGRAY
+        );
+        welcome.setPadding(0, dp(5), 0, dp(25));
+        content.addView(welcome);
+
+        addSection(content, "MAIN MENU");
+
+        addMenu(content, "BUG COLLECTION",
+            "Kumpulan informasi bug (simulasi)");
+
+        addMenu(content, "CRASH BIASA",
+            "Menu simulasi crash biasa");
+
+        addMenu(content, "CRASH PARAH",
+            "Menu simulasi crash tingkat lanjut");
+
+        addMenu(content, "BANNED",
+            "Informasi dan simulasi status banned");
+
+        addMenu(content, "TARGET",
+            "Menu target latihan (simulasi)");
+
+        addSection(content, "OTHER MENU");
+
+        addMenu(content, "PROFIL DEVELOPER",
+            "Developer: YNZ NEW ERA\nTelegram: @ynz_newera");
+
+        addMenu(content, "TELEGRAM",
+            "Hubungi Telegram resmi");
+
+        TextView footer = text(
+            "YNZ NEW ERA  •  VERSION 1.0",
+            10,
+            Color.GRAY
+        );
+        footer.setPadding(0, dp(25), 0, dp(10));
+        content.addView(footer);
+
+        scroll.addView(content);
+        root.addView(scroll);
+
+        setContentView(root);
     }
 
-    void addMenu(String name) {
-        Button btn = new Button(this);
-        btn.setText(name);
-        btn.setTextColor(Color.WHITE);
-        btn.setBackgroundTintList(
-            android.content.res.ColorStateList.valueOf(Color.rgb(160,0,0))
-        );
+    void addSection(LinearLayout parent, String title) {
+        TextView section = text(title, 12, RED);
+        section.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        section.setPadding(dp(5), dp(12), 0, dp(8));
+        parent.addView(section);
+    }
+
+    void addMenu(LinearLayout parent, String name, String description) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(16), dp(14), dp(16), dp(14));
+        card.setBackground(shape(Color.rgb(28, 25, 28), 14, RED));
 
         LinearLayout.LayoutParams params =
-            new LinearLayout.LayoutParams(-1, -2);
-        params.setMargins(0, 10, 0, 10);
-        layout.addView(btn, params);
+            new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
 
-        btn.setOnClickListener(v -> {
+        params.setMargins(0, dp(5), 0, dp(8));
+        parent.addView(card, params);
+
+        TextView heading = text(name, 15, WHITE);
+        heading.setGravity(Gravity.LEFT);
+        card.addView(heading);
+
+        TextView detail = text(description, 11, Color.LTGRAY);
+        detail.setGravity(Gravity.LEFT);
+        detail.setPadding(0, dp(5), 0, 0);
+        card.addView(detail);
+
+        card.setOnClickListener(v -> {
             if (name.equals("TELEGRAM")) {
-                telegram();
-            } else if (name.equals("PROFIL DEVELOPER")) {
-                new AlertDialog.Builder(this)
-                    .setTitle("DEVELOPER")
-                    .setMessage("YNZ NEW ERA\nTelegram: @ynz_newera")
-                    .setPositiveButton("OK", null)
-                    .show();
+                openTelegram();
             } else {
                 new AlertDialog.Builder(this)
                     .setTitle(name)
-                    .setMessage("Menu " + name + "\nMode simulasi aktif.")
+                    .setMessage(description)
                     .setPositiveButton("OK", null)
                     .show();
             }
         });
     }
 
-    void telegram() {
+    void openTelegram() {
         try {
-            Intent i = new Intent(Intent.ACTION_VIEW,
-                android.net.Uri.parse("https://t.me/ynz_newera"));
-            startActivity(i);
+            Intent intent = new Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://t.me/ynz_newera")
+            );
+            startActivity(intent);
         } catch (Exception e) {
-            Toast.makeText(this, "Telegram tidak ditemukan",
-                Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                this,
+                "Tidak bisa membuka Telegram",
+                Toast.LENGTH_SHORT
+            ).show();
         }
     }
 }
