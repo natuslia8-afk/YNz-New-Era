@@ -25,12 +25,24 @@ jobs:
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/res/drawable
+        mkdir -p gradle/wrapper
 
-        # 1. Root Gradle
+        # 1. Gradle Wrapper (INI YANG TADI KELUPAAN)
+        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+        networkTimeout=10000
+        validateDistributionUrl=true
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
+
+        # 2. Root Gradle
         cat > build.gradle << 'EOF'
         plugins {
-            id 'com.android.application' version '8.2.0' apply false
-            id 'org.jetbrains.kotlin.android' version '1.9.0' apply false
+            id 'com.android.application' version '8.3.0' apply false
+            id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
         }
         EOF
 
@@ -46,7 +58,14 @@ jobs:
         include ':app'
         EOF
 
-        # 2. App Gradle
+        cat > gradle.properties << 'EOF'
+        org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+        android.useAndroidX=true
+        kotlin.code.style=official
+        android.nonTransitiveRClass=true
+        EOF
+
+        # 3. App Gradle
         cat > app/build.gradle << 'EOF'
         plugins {
             id 'com.android.application'
@@ -76,7 +95,7 @@ jobs:
         }
         EOF
 
-        # 3. Manifest
+        # 4. Manifest
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.lo.ynznewera">
@@ -101,7 +120,7 @@ jobs:
         </manifest>
         EOF
 
-        # 4. Colors & Themes
+        # 5. Colors & Themes
         cat > app/src/main/res/values/colors.xml << 'EOF'
         <resources>
             <color name="black_bg">#050000</color>
@@ -124,7 +143,7 @@ jobs:
         </resources>
         EOF
 
-        # 5. Drawables
+        # 6. Drawables
         cat > app/src/main/res/drawable/box_red.xml << 'EOF'
         <shape xmlns:android="http://schemas.android.com/apk/res/android">
             <solid android:color="@color/black_bg" />
@@ -140,7 +159,7 @@ jobs:
         </shape>
         EOF
 
-        # 6. Layouts
+        # 7. Layouts
         cat > app/src/main/res/layout/activity_main.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -236,7 +255,7 @@ jobs:
         </LinearLayout>
         EOF
 
-        # 7. Kotlin Files
+        # 8. Kotlin Files
         cat > app/src/main/java/com/lo/ynznewera/MainActivity.kt << 'EOF'
         package com.lo.ynznewera
         import android.content.Intent
@@ -395,11 +414,11 @@ jobs:
         }
         EOF
 
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v3
+
     - name: Build with Gradle
-      run: |
-        gradle wrapper --gradle-version 8.2
-        chmod +x gradlew
-        ./gradlew assembleDebug
+      run: gradle assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
