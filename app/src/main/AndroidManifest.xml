@@ -6,7 +6,8 @@
         android:icon="@drawable/ynz_logo"
         android:roundIcon="@drawable/ynz_logo"
         android:label="YNZ NEW ERA"
-        android:theme="@android:style/Theme.Material.NoActionBar"
+        
+    android:theme="@android:style/Theme.Material.NoActionBar"
         android:usesCleartextTraffic="false">
 
         <activity
